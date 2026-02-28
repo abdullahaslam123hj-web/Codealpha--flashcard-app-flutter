@@ -1,0 +1,227 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+void main() {
+  runApp(
+    ChangeNotifierProvider<FlashcardDeck>(
+      create: (BuildContext context) => FlashcardDeck(),
+      builder: (BuildContext context, Widget? child) => const FlashcardApp(),
+    ),
+  );
+}
+
+/// Represents a single flashcard with a question and an answer.
+class Flashcard {
+  final String question;
+  final String answer;
+
+  const Flashcard({
+    required this.question,
+    required this.answer,
+  });
+}
+
+/// Manages a deck of flashcards and the current card being displayed.
+class FlashcardDeck extends ChangeNotifier {
+  final List<Flashcard> _flashcards = <Flashcard>[
+    const Flashcard(
+      question: 'What is the capital of France?',
+      answer: 'Paris',
+    ),
+    const Flashcard(
+      question: 'What is the largest planet in our solar system?',
+      answer: 'Jupiter',
+    ),
+    const Flashcard(
+      question: 'Who painted the Mona Lisa?',
+      answer: 'Leonardo da Vinci',
+    ),
+    const Flashcard(
+      question: 'What is the chemical symbol for water?',
+      answer: 'H2O',
+    ),
+    const Flashcard(
+      question: 'How many continents are there?',
+      answer: 'Seven',
+    ),
+  ];
+
+  int _currentIndex = 0;
+
+  Flashcard get currentFlashcard => _flashcards[_currentIndex];
+  int get currentCardIndex => _currentIndex;
+  int get totalCards => _flashcards.length;
+
+  /// Moves to the next flashcard in the deck.
+  void nextCard() {
+    if (_currentIndex < _flashcards.length - 1) {
+      _currentIndex++;
+      notifyListeners();
+    }
+  }
+
+  /// Moves to the previous flashcard in the deck.
+  void previousCard() {
+    if (_currentIndex > 0) {
+      _currentIndex--;
+      notifyListeners();
+    }
+  }
+}
+
+/// The main application widget for the flashcard app.
+class FlashcardApp extends StatelessWidget {
+  const FlashcardApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Flashcards',
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Flashcards'),
+        ),
+        body: Center(
+          child: Consumer<FlashcardDeck>(
+            builder: (BuildContext context, FlashcardDeck deck, Widget? child) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: FlashcardDisplay(
+                        flashcard: deck.currentFlashcard,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Text(
+                      'Card ${deck.currentCardIndex + 1} of ${deck.totalCards}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 24.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_ios),
+                          iconSize: 48,
+                          onPressed: deck.currentCardIndex > 0
+                              ? () => deck.previousCard()
+                              : null,
+                          color: Theme.of(context).primaryColor,
+                          disabledColor: Colors.grey.shade400,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_forward_ios),
+                          iconSize: 48,
+                          onPressed: deck.currentCardIndex < deck.totalCards - 1
+                              ? () => deck.nextCard()
+                              : null,
+                          color: Theme.of(context).primaryColor,
+                          disabledColor: Colors.grey.shade400,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Displays a single flashcard, allowing it to be flipped.
+class FlashcardDisplay extends StatefulWidget {
+  final Flashcard flashcard;
+
+  const FlashcardDisplay({
+    super.key,
+    required this.flashcard,
+  });
+
+  @override
+  State<FlashcardDisplay> createState() => _FlashcardDisplayState();
+}
+
+class _FlashcardDisplayState extends State<FlashcardDisplay> {
+  bool _isFlipped = false;
+
+  @override
+  void didUpdateWidget(covariant FlashcardDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset flip state when a new flashcard is loaded
+    if (widget.flashcard != oldWidget.flashcard) {
+      setState(() {
+        _isFlipped = false;
+      });
+    }
+  }
+
+  void _toggleFlip() {
+    setState(() {
+      _isFlipped = !_isFlipped;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _toggleFlip,
+      child: Card(
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: _isFlipped ? Colors.deepPurple.shade100 : Colors.white,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(
+                _isFlipped ? Icons.lightbulb_outline : Icons.question_mark,
+                size: 60,
+                color: _isFlipped ? Colors.deepPurple : Colors.grey.shade700,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                _isFlipped ? widget.flashcard.answer : widget.flashcard.question,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: _isFlipped ? Colors.deepPurple : Colors.black87,
+                ),
+              ),
+              if (!_isFlipped) ...<Widget>[
+                const SizedBox(height: 20),
+                Text(
+                  '(Tap to reveal answer)',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
