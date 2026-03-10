@@ -1,0 +1,14 @@
+Project Title: Flashcard Learning App
+
+This project is a simple Flashcard Learning Application developed using Flutter and Dart.
+
+The application allows users to view flashcards and reveal answers interactively. 
+It helps users improve learning and memory using a simple card-based interface.
+
+Features:
+- Interactive flashcards
+- Tap to reveal answers
+- Simple and clean UI
+
+Internship: CodeAlpha
+Domain: Flutter App Development
